@@ -1,0 +1,23 @@
+{
+  "@@locale": "fa",
+  "appTitle": "خلاصه ساز وب",
+  "greeting": "سلام!",
+  "change_Language": "تغییر زبان",
+  "error_invalid_url": "آدرس وبسایت معتبر نیست",
+  "error_empty_url": "لطفا آدرس سایت را پر کنید",
+  "enter_url": "آدرس وبسایت را وارد کنید",
+  "submit": "ثبت",
+  "ok_txt": "اوکی",
+  "error_txt": "خطا",
+  "successTitle": "موفق شدید",
+  "validurl": "آدرس معتبر است",
+  "failed": "ناموفق",
+  "valid": "معتبر",
+  "recently_txt": "بازدیدهای اخیر",
+  "delete": "آیتم حذف شد",
+  "dlt_msg": "این آیتم از لیست شما حذف شد.",
+  "undo": "لغو",
+  "noSavedUrlsYet": "هنوز URL وجود ندارد.",
+  "copied": "کپی شد: ",
+  "see_all": "مشاهده همه"
+}

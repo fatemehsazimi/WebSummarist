@@ -1,0 +1,23 @@
+{
+  "@@locale": "en",
+  "appTitle": "WebSummarist",
+  "greeting": "Hello!",
+  "change_Language": "Change Language",
+  "error_invalid_url": "URL format is invalid",
+  "error_empty_url": "URL is empty",
+  "enter_url": "Enter URL",
+  "submit": "Submit",
+  "ok_txt": "OK",
+  "error_txt": "Error",
+  "successTitle": "Success",
+  "validurl": "Valid URL!",
+  "failed": "Failed",
+  "valid": "Valid",
+  "recently_txt": "Recently viewed",
+  "delete": "Item deleted",
+  "dlt_msg": "The item has been removed from your list",
+  "undo": "Undo",
+  "noSavedUrlsYet": "No URLs yet.",
+  "copied": "Copied: ",
+  "see_all": "See all"
+}
