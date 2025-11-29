@@ -7,8 +7,10 @@ import 'package:web_summarist/features/web_summary/presentation/widgets/alert_di
 import 'package:web_summarist/features/web_summary/domain/enums/url_validation_state.dart';
 import 'package:web_summarist/features/web_summary/presentation/widgets/list_view_widget.dart';
 import 'package:web_summarist/features/web_summary/presentation/widgets/url_input_field.dart';
+import '../../data/models/urls_model.dart';
 import '../../domain/enums/web_summary_state.dart';
 import '../controllers/url_ui_state.dart';
+import 'summary_result_page.dart';
 
 class MyHomePage extends ConsumerWidget {
   final TextEditingController controller = TextEditingController();
@@ -17,8 +19,7 @@ class MyHomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final urls = ref.watch(urlListProvider);
-    final nonEmptyUrls = urls.where((u) => u.trim().isNotEmpty).toList();
+    final urls = ref.watch(urlsViewModelProvider);
     final l10n = AppLocalizations.of(context)!;
 
     ref.listen<UrlUiState>(homeViewModelProvider, (previous, current) {
@@ -34,30 +35,44 @@ class MyHomePage extends ConsumerWidget {
         if (previous?.webSummaryUiState.status == WebSummaryState.loading) {
           Navigator.of(context, rootNavigator: true).pop();
         }
+
         if (summaryState == WebSummaryState.success) {
-          ref.read(urlListProvider.notifier).addUrl(controller.text);
-          showDialog(
-            context: context,
-            builder:
-                (_) => AlertDialogWidget(
-                  title: Text(l10n.successTitle),
-                  message: Text(current.webSummaryUiState.summaryText ?? ""),
-                  buttontxt: Text(l10n.ok_txt),
+          final summary = current.webSummaryUiState.summaryText ?? '';
+          final url = current.webSummaryUiState.url ?? controller.text;
+
+          ref
+              .read(urlsViewModelProvider.notifier)
+              .addUrl(
+                UrlsModel(
+                  url: url,
+                  summaryresult: summary,
+                  date: DateTime.now(),
                 ),
+              );
+
+          ref
+              .read(summaryResultViewModelProvider.notifier)
+              .loadData(url: url, summary: summary);
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => SummaryResultPage()),
           ).then((_) {
             ref.read(homeViewModelProvider.notifier).resetSummaryState();
           });
         }
 
         if (summaryState == WebSummaryState.failed) {
+          final err =
+              current.webSummaryUiState.errorMessage ??
+              current.errorMessage ??
+              'Unknown error';
           showDialog(
             context: context,
             builder:
                 (_) => AlertDialogWidget(
                   title: Text(l10n.failed),
-                  message: Text(
-                    current.webSummaryUiState.errorMessage ?? "Error",
-                  ),
+                  message: Text(err),
                   buttontxt: Text(l10n.ok_txt),
                 ),
           ).then((_) {
@@ -91,77 +106,92 @@ class MyHomePage extends ConsumerWidget {
       }
     });
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-      appBar: AppBar(
+    return SafeArea(
+      child: Scaffold(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(l10n.appTitle),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                UrlInputField(controller: controller, hintText: l10n.enter_url),
-                const SizedBox(width: 8),
-                TextButton(
-                  style: TextButton.styleFrom(
-                    backgroundColor: Theme.of(context).colorScheme.secondary,
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(l10n.appTitle),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  UrlInputField(
+                    controller: controller,
+                    hintText: l10n.enter_url,
                   ),
-                  onPressed: () {
-                    ref
-                        .read(homeViewModelProvider.notifier)
-                        .setUrl(controller.text);
-                  },
-                  child: Text(
-                    l10n.submit,
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSecondary,
+                  const SizedBox(width: 8),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.secondary,
                     ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 30),
-            nonEmptyUrls.isNotEmpty
-                ? Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            l10n.recently_txt,
-                            style: const TextStyle(fontWeight: FontWeight.bold,fontSize: 18),
-                          ),
-                          TextButton(
-                            onPressed: () => context.push('/see-all'),
-                            child: Text(l10n.see_all),
-                          ),
-                        ],
+                    onPressed: () {
+                      ref
+                          .read(homeViewModelProvider.notifier)
+                          .setUrl(controller.text);
+                    },
+                    child: Text(
+                      l10n.submit,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSecondary,
                       ),
                     ),
-                    SizedBox(
-                      height: 65,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: nonEmptyUrls.length,
-                        itemBuilder: (context, index) {
-                          return ListViewWidget(
-                            title: nonEmptyUrls[index],
-                            ontap: () {
-                              controller.text = nonEmptyUrls[index];
-                            },
-                          );
-                        },
+                  ),
+                ],
+              ),
+              SizedBox(height: 30),
+              urls.isEmpty
+                  ? const SizedBox.shrink()
+                  : Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(8),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              l10n.recently_txt,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => context.push('/see-all'),
+                              child: Text(l10n.see_all),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
-                )
-                : const SizedBox.shrink(),
-          ],
+                      SizedBox(
+                        height: 105,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: urls.length,
+                          itemBuilder: (context, index) {
+                            final item = urls[index];
+                            final uri = Uri.parse(item.url);
+                            final String uu = uri.host.replaceFirst('www.', '');
+                            final String domainWithoutSuffix =
+                                uu.split('.').first;
+                            return ListViewWidget(
+                              title: domainWithoutSuffix,
+                              ontap: () {
+                                controller.text = item.url;
+                              },
+                              date: item.date,
+                              result: item.summaryresult,
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+            ],
+          ),
         ),
       ),
     );

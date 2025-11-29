@@ -1,13 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:web_summarist/features/web_summary/presentation/controllers/summary_result_ui_state.dart';
+import 'package:web_summarist/features/web_summary/presentation/controllers/summary_result_view_model.dart';
 import 'package:web_summarist/features/web_summary/presentation/controllers/url_list_viewmodel.dart';
 import 'package:web_summarist/features/web_summary/presentation/controllers/url_ui_state.dart';
+import '../../data/models/urls_model.dart';
+import '../../data/repositories/web_summary_repository.dart';
 import '../../domain/repositories/summary_repository.dart';
 import '../../domain/usecases/summarize_url_usecase.dart';
 import 'home_view_model.dart';
 
-final webSummaryRepositoryProvider = Provider<WebSummaryRepository>((ref) {
-  return WebSummaryRepository();
+final webSummaryRepositoryProvider = Provider<SummaryRepository>((ref) {
+  return WebSummaryRepositoryImpl(baseUrl: 'http://10.0.2.2:8000/api');
 });
 
 final summarizeUrlUseCaseProvider = Provider<SummarizeUrlUseCase>((ref) {
@@ -21,8 +25,12 @@ final homeViewModelProvider = StateNotifierProvider<HomeViewModel, UrlUiState>((
   return HomeViewModel(ref);
 });
 
-final urlListProvider = StateNotifierProvider<UrlListViewModel, List<String>>((
-  ref,
-) {
-  return UrlListViewModel();
-});
+final urlsViewModelProvider =
+    StateNotifierProvider<UrlsViewModel, List<UrlsModel>>((ref) {
+      return UrlsViewModel();
+    });
+
+final summaryResultViewModelProvider =
+    StateNotifierProvider<SummaryResultViewModel, SummaryResultUiState>((ref) {
+      return SummaryResultViewModel();
+    });

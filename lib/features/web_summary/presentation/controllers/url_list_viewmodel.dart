@@ -1,40 +1,40 @@
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive/hive.dart';
+import 'package:web_summarist/features/web_summary/data/models/urls_model.dart';
 
-class UrlListViewModel extends StateNotifier<List<String>> {
-  UrlListViewModel() : super([]) {
-    _loadUrls();
+class UrlsViewModel extends StateNotifier<List<UrlsModel>> {
+  static const String boxName = 'urlsBox';
+  UrlsModel? _lastDeleted;
+
+  late Box<UrlsModel> _box;
+
+  UrlsViewModel() : super([]) {
+    _init();
   }
 
-  String? _lastDeletedUrl;
-
-  Future<void> _loadUrls() async {
-    final prefs = await SharedPreferences.getInstance();
-    state = prefs.getStringList('myStringList') ?? [];
+  Future<void> _init() async {
+    _box = await Hive.openBox<UrlsModel>(boxName);
+    state = _box.values.toList();
   }
 
-  Future<void> addUrl(String url) async {
-    if (state.contains(url)) return;
-    final prefs = await SharedPreferences.getInstance();
-    final updated = [...state, url];
-    await prefs.setStringList('myStringList', updated);
-    state = updated;
+  Future<void> addUrl(UrlsModel urlModel) async {
+    final exists = _box.values.any((u) => u.url == urlModel.url);
+    if (exists) return;
+    await _box.add(urlModel);
+    state = _box.values.toList();
   }
 
-  Future<void> removeUrl(String url) async {
-    _lastDeletedUrl = url;
-    final prefs = await SharedPreferences.getInstance();
-    final updated = state.where((e) => e != url).toList();
-    await prefs.setStringList('myStringList', updated);
-    state = updated;
+  Future<void> removeUrl(int index) async {
+    _lastDeleted = state[index];
+    await _box.deleteAt(index);
+    state = _box.values.toList();
   }
 
   Future<void> undoRemoveUrl() async {
-    if (_lastDeletedUrl == null) return;
-    final prefs = await SharedPreferences.getInstance();
-    final updated = [...state, _lastDeletedUrl!];
-    await prefs.setStringList('myStringList', updated);
-    state = updated;
-    _lastDeletedUrl = null;
+    if (_lastDeleted != null) {
+      await _box.add(_lastDeleted!);
+      state = _box.values.toList();
+      _lastDeleted = null;
+    }
   }
 }
